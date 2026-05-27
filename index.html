@@ -58,6 +58,7 @@
         #result-screen { display: none; text-align: center; }
         .final-score-text { font-size: 54px; font-weight: 900; color: #1cb0f6; margin: 20px 0; }
         .home-btn-large { background-color: #58cc02; color: white; border: none; border-radius: 15px; padding: 15px; font-size: 18px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 25px; }
+        .level-badge { display: inline-block; padding: 6px 14px; font-size: 16px; font-weight: bold; color: white; border-radius: 10px; margin-bottom: 10px; }
     </style>
 </head>
 <body>
@@ -91,6 +92,7 @@
 
     <div id="result-screen">
         <h2>🎉 훈련 종료!</h2>
+        <div id="result-level-badge" class="level-badge"></div>
         <p>최종 획득 점수입니다.</p>
         <div class="final-score-text" id="final-score">0</div>
         <p id="result-message" style="font-size: 16px; color:#555; line-height:1.4;"></p>
@@ -251,6 +253,8 @@
     let totalScore = 0;
     let startTime = 0;
     let timerInterval;
+    let currentLevelName = ""; // 현재 진행 중인 난이도 이름을 저장할 변수
+    let currentLevelColor = ""; // 현재 진행 중인 난이도의 색상을 저장할 변수
 
     const BASE_SCORE = 100;
     const MAX_TIME_BONUS = 100;
@@ -266,6 +270,18 @@
     function startQuiz(level) {
         currentQuestions = [];
         let usedQuestions = new Set(); // 출제된 문제를 기억할 Set 생성
+
+        // 난이도 정보 저장
+        if (level === 'easy') {
+            currentLevelName = "쉬움";
+            currentLevelColor = "#58cc02";
+        } else if (level === 'medium') {
+            currentLevelName = "중간";
+            currentLevelColor = "#ff9600";
+        } else {
+            currentLevelName = "어려움";
+            currentLevelColor = "#ff4b4b";
+        }
 
         // 10개의 중복되지 않는 문제가 모일 때까지 반복
         while (currentQuestions.length < 10) {
@@ -363,6 +379,11 @@
         document.getElementById("result-screen").style.display = "block";
         document.getElementById("final-score").innerText = totalScore;
         
+        // 결과 화면에 난이도 배지 출력 적용
+        const badge = document.getElementById("result-level-badge");
+        badge.innerText = `${currentLevelName} 난이도`;
+        badge.style.backgroundColor = currentLevelColor;
+
         const msg = document.getElementById("result-message");
         if (totalScore >= 1800) msg.innerHTML = "A급의 완벽한 스피드와 정확도입니다! 최상위권 실력! 🚀";
         else if (totalScore >= 1000) msg.innerHTML = "훌륭합니다! 조금만 더 빠르게 풀면 완벽하겠어요.";
