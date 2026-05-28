@@ -58,6 +58,7 @@
         #result-screen { display: none; text-align: center; }
         .final-score-text { font-size: 54px; font-weight: 900; color: #1cb0f6; margin: 20px 0; }
         .home-btn-large { background-color: #58cc02; color: white; border: none; border-radius: 15px; padding: 15px; font-size: 18px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 25px; }
+        .level-badge { display: inline-block; padding: 6px 14px; font-size: 16px; font-weight: bold; color: white; border-radius: 10px; margin-bottom: 10px; }
     </style>
 </head>
 <body>
@@ -91,6 +92,7 @@
 
     <div id="result-screen">
         <h2>🎉 훈련 종료!</h2>
+        <div id="result-level-badge" class="level-badge"></div>
         <p>최종 획득 점수입니다.</p>
         <div class="final-score-text" id="final-score">0</div>
         <p id="result-message" style="font-size: 16px; color:#555; line-height:1.4;"></p>
@@ -187,8 +189,8 @@
                 w3 = `(${m2Str}+${n*n})(${mStr}-1)`;
             } else {
                 ans = `${pref}(${mpStr}+${np})(${mpStr}-${np})`;
-                w1 = `(${mStr}+${n})(${mStr}-${n})`; // 덜 묶인 상태 유도
-                w2 = `${prefG}(${mpStr}+${np})(${mpStr}-${np})`; // g² 대신 g로 잘못 묶음
+                w1 = `(${mStr}+${n})(${mStr}-${n})`; 
+                w2 = `${prefG}(${mpStr}+${np})(${mpStr}-${np})`; 
                 w3 = `${pref}(${mpStr}-${np})²`; 
             }
         } else if (type === 2) { 
@@ -201,8 +203,8 @@
                 w3 = `(${m2Str}+${n})²`; 
             } else {
                 ans = `${pref}(${mpStr}+${np})²`;
-                w1 = `(${mStr}+${n})²`; // 덜 묶인 상태 유도
-                w2 = `${prefG}(${mpStr}+${np})²`; // g² 대신 g로 잘못 묶음
+                w1 = `(${mStr}+${n})²`; 
+                w2 = `${prefG}(${mpStr}+${np})²`; 
                 w3 = `${pref}(${mpStr}-${np})²`; 
             }
         } else { 
@@ -215,8 +217,8 @@
                 w3 = `(${m2Str}-${n})²`; 
             } else {
                 ans = `${pref}(${mpStr}-${np})²`;
-                w1 = `(${mStr}-${n})²`; // 덜 묶인 상태 유도
-                w2 = `${prefG}(${mpStr}-${np})²`; // g² 대신 g로 잘못 묶음
+                w1 = `(${mStr}-${n})²`; 
+                w2 = `${prefG}(${mpStr}-${np})²`; 
                 w3 = `${pref}(${mpStr}+${np})²`; 
             }
         }
@@ -226,23 +228,79 @@
     }
 
     function makeHard() {
-        let a = randInt(-9, 9); let b = randInt(-9, 9);
-        while(a === 0 || b === 0 || a === b || a+b === 0) {
-            a = randInt(-9, 9); b = randInt(-9, 9);
+        let c, d, a, b;
+        let valid = false;
+        
+        while (!valid) {
+            c = randInt(1, 4);
+            d = randInt(1, 4);
+            a = randInt(-5, 5);
+            b = randInt(-5, 5);
+
+            if (a === 0 || b === 0) continue;
+            
+            // x²의 계수가 1이 되는 경우 원천 차단 (무조건 2 이상이 나오도록 강제)
+            if (c * d === 1) continue;
+            
+            // 괄호 내부에 공통인수가 없도록 설정
+            if (getGCD(c, Math.abs(a)) !== 1) continue;
+            if (getGCD(d, Math.abs(b)) !== 1) continue;
+            
+            // 완전제곱식 제외
+            if (c === d && a === b) continue;
+
+            let A = c * d;
+            let B = c * b + a * d;
+            let C = a * b;
+
+            // 전체 식에 공통인수가 없도록 설정
+            if (getGCD(A, getGCD(Math.abs(B), Math.abs(C))) !== 1) continue;
+
+            valid = true;
         }
-        let sum = a + b; let prod = a * b;
-        let sumStr = sum === 1 ? "+ x" : (sum === -1 ? "- x" : (sum > 0 ? `+ ${sum}x` : `- ${Math.abs(sum)}x`));
-        let prodStr = prod > 0 ? `+ ${prod}` : `- ${Math.abs(prod)}`;
+
+        let A = c * d;
+        let B = c * b + a * d;
+        let C = a * b;
+
+        // 식 생성
+        // A는 무조건 1보다 크므로 "x²"만 출력되는 일을 방지합니다.
+        let A_str = A + "x²"; 
+        let B_str = B === 0 ? "" : (B === 1 ? " + x" : (B === -1 ? " - x" : (B > 0 ? ` + ${B}x` : ` - ${Math.abs(B)}x`)));
+        let C_str = C > 0 ? ` + ${C}` : ` - ${Math.abs(C)}`;
+        let q = `${A_str}${B_str}${C_str}`;
+
+        let cx_str = c === 1 ? "x" : c + "x";
+        let dx_str = d === 1 ? "x" : d + "x";
         
-        let q = `x² ${sumStr} ${prodStr}`;
-        let ans = `(x${a>0?'+'+a:a})(x${b>0?'+'+b:b})`;
-        let w1 = `(x${a>0?-a:'+'+Math.abs(a)})(x${b>0?-b:'+'+Math.abs(b)})`; 
-        let w2 = `(x${sum>0?'+'+sum:sum})(x${prod>0?'+'+prod:prod})`; 
-        let w3 = `(x${a>0?'+'+a:a})²`; 
+        // 정답
+        let ans = `(${cx_str}${a>0?'+'+a:a})(${dx_str}${b>0?'+'+b:b})`;
+
+        // 오답 1: 부호 오류
+        let w1 = `(${cx_str}${a>0?-a:'+'+Math.abs(a)})(${dx_str}${b>0?-b:'+'+Math.abs(b)})`;
+        // 오답 2: 숫자 위치 오류
+        let w2 = `(${cx_str}${b>0?'+'+b:b})(${dx_str}${a>0?'+'+a:a})`;
+        // 오답 3: 최고차항 계수 분배 오류 (A를 한 쪽에 몰아줌)
+        let w3 = `(${A}x${a>0?'+'+a:a})(x${b>0?'+'+b:b})`;
+
+        // 오답 중복 시 안전장치
+        let wrongs = [w1, w2, w3];
+        for(let i = 0; i < 3; i++) {
+            if(wrongs[i] === ans || wrongs.indexOf(wrongs[i]) !== i) {
+                let fA = randInt(1, 5), fB = randInt(1, 5);
+                let fS1 = randInt(0, 1) ? '+' : '-';
+                let fS2 = randInt(0, 1) ? '+' : '-';
+                wrongs[i] = `(${cx_str}${fS1}${fA})(${dx_str}${fS2}${fB})`;
+            }
+        }
         
-        if(ans===w1 || ans===w2 || ans===w3) w3 = `(x+1)(x${prodStr})`;
-        
-        let { options, answer } = generateOptions(ans, w1, w2, w3);
+        if (new Set([ans, ...wrongs]).size < 4) {
+             wrongs[0] = `(${cx_str}+7)(${dx_str}-8)`;
+             wrongs[1] = `(${cx_str}-7)(${dx_str}+8)`;
+             wrongs[2] = `(${cx_str}+9)(${dx_str}-1)`;
+        }
+
+        let { options, answer } = generateOptions(ans, wrongs[0], wrongs[1], wrongs[2]);
         return { q, options, answer };
     }
 
@@ -251,6 +309,8 @@
     let totalScore = 0;
     let startTime = 0;
     let timerInterval;
+    let currentLevelName = ""; // 현재 진행 중인 난이도 이름을 저장할 변수
+    let currentLevelColor = ""; // 현재 진행 중인 난이도의 색상을 저장할 변수
 
     const BASE_SCORE = 100;
     const MAX_TIME_BONUS = 100;
@@ -266,6 +326,18 @@
     function startQuiz(level) {
         currentQuestions = [];
         let usedQuestions = new Set(); // 출제된 문제를 기억할 Set 생성
+
+        // 난이도 정보 저장
+        if (level === 'easy') {
+            currentLevelName = "쉬움";
+            currentLevelColor = "#58cc02";
+        } else if (level === 'medium') {
+            currentLevelName = "중간";
+            currentLevelColor = "#ff9600";
+        } else {
+            currentLevelName = "어려움";
+            currentLevelColor = "#ff4b4b";
+        }
 
         // 10개의 중복되지 않는 문제가 모일 때까지 반복
         while (currentQuestions.length < 10) {
@@ -363,6 +435,11 @@
         document.getElementById("result-screen").style.display = "block";
         document.getElementById("final-score").innerText = totalScore;
         
+        // 결과 화면에 난이도 배지 출력 적용
+        const badge = document.getElementById("result-level-badge");
+        badge.innerText = `${currentLevelName} 난이도`;
+        badge.style.backgroundColor = currentLevelColor;
+
         const msg = document.getElementById("result-message");
         if (totalScore >= 1800) msg.innerHTML = "A급의 완벽한 스피드와 정확도입니다! 최상위권 실력! 🚀";
         else if (totalScore >= 1000) msg.innerHTML = "훌륭합니다! 조금만 더 빠르게 풀면 완벽하겠어요.";
