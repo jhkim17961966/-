@@ -226,15 +226,24 @@
         let c, d, a, b;
         let valid = false;
         
+        // 50% 확률로 x^2 계수가 1인 문제와 1이 아닌 문제를 섞어서 출제합니다.
+        let isLeadOne = randInt(0, 1) === 0;
+        
         while (!valid) {
-            c = randInt(1, 4);
-            d = randInt(1, 4);
-            a = randInt(-5, 5);
-            b = randInt(-5, 5);
+            if (isLeadOne) {
+                c = 1;
+                d = 1;
+            } else {
+                c = randInt(1, 4);
+                d = randInt(1, 4);
+                // 강제로 1이 아니게 조정
+                if (c === 1 && d === 1) c = 2; 
+            }
+            
+            a = randInt(-7, 7);
+            b = randInt(-7, 7);
 
             if (a === 0 || b === 0) continue;
-            
-            if (c * d === 1) continue;
             
             if (getGCD(c, Math.abs(a)) !== 1) continue;
             if (getGCD(d, Math.abs(b)) !== 1) continue;
@@ -245,7 +254,6 @@
             let B = c * b + a * d;
             let C = a * b;
             
-            // x항의 계수가 0이 되면 부호를 바꾼 오답(w1)이 정답과 수학적으로 같아지므로 제외
             if (B === 0) continue; 
 
             if (getGCD(A, getGCD(Math.abs(B), Math.abs(C))) !== 1) continue;
@@ -257,7 +265,7 @@
         let B = c * b + a * d;
         let C = a * b;
 
-        let A_str = A + "x²"; 
+        let A_str = A === 1 ? "x²" : A + "x²"; 
         let B_str = B === 0 ? "" : (B === 1 ? " + x" : (B === -1 ? " - x" : (B > 0 ? ` + ${B}x` : ` - ${Math.abs(B)}x`)));
         let C_str = C > 0 ? ` + ${C}` : ` - ${Math.abs(C)}`;
         let q = `${A_str}${B_str}${C_str}`;
@@ -265,19 +273,27 @@
         let cx_str = c === 1 ? "x" : c + "x";
         let dx_str = d === 1 ? "x" : d + "x";
         
-        // 정답
+        // 정답 및 순서가 바뀐 정답(오답 차단용)
         let ans = `(${cx_str}${a>0?'+'+a:a})(${dx_str}${b>0?'+'+b:b})`;
-        
-        // 순서가 뒤바뀐 정답 문자열 정의 (이 문자열이 오답에 들어가는 것을 방지)
         let ansReversed = `(${dx_str}${b>0?'+'+b:b})(${cx_str}${a>0?'+'+a:a})`;
 
-        let w1 = `(${cx_str}${a>0?-a:'+'+Math.abs(a)})(${dx_str}${b>0?-b:'+'+Math.abs(b)})`;
-        let w2 = `(${cx_str}${b>0?'+'+b:b})(${dx_str}${a>0?'+'+a:a})`;
-        let w3 = `(${A}x${a>0?'+'+a:a})(x${b>0?'+'+b:b})`;
+        let w1, w2, w3;
+
+        if (A === 1) {
+            // x^2 계수가 1일 때의 맞춤형 매력적 오답
+            w1 = `(x${a>0?-a:'+'+Math.abs(a)})(x${b>0?-b:'+'+Math.abs(b)})`; 
+            w2 = `(x${B>0?'+'+B:B})(x${C>0?'+'+C:C})`; 
+            w3 = `(x${a>0?'+'+a:a})²`; 
+        } else {
+            // x^2 계수가 1이 아닐 때의 맞춤형 매력적 오답
+            w1 = `(${cx_str}${a>0?-a:'+'+Math.abs(a)})(${dx_str}${b>0?-b:'+'+Math.abs(b)})`;
+            w2 = `(${cx_str}${b>0?'+'+b:b})(${dx_str}${a>0?'+'+a:a})`;
+            w3 = `(${A}x${a>0?'+'+a:a})(x${b>0?'+'+b:b})`;
+        }
 
         let wrongs = [w1, w2, w3];
         for(let i = 0; i < 3; i++) {
-            // 오답이 정답이거나, 순서가 바뀐 정답(ansReversed)과 같거나, 중복되는 경우 계속해서 새로 생성
+            // 오답이 정답이거나, 순서가 바뀐 정답과 같거나, 서로 중복되면 다시 생성
             while(wrongs[i] === ans || wrongs[i] === ansReversed || wrongs.indexOf(wrongs[i]) !== i) {
                 let fC = randInt(1, 4), fD = randInt(1, 4);
                 let fA = randInt(1, 5), fB = randInt(1, 5);
