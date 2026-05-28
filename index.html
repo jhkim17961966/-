@@ -103,7 +103,6 @@
 <script>
     function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
 
-    // 최대공약수(GCD) 계산 함수
     function getGCD(a, b) { return b === 0 ? a : getGCD(b, a % b); }
 
     function generateOptions(ans, w1, w2, w3) {
@@ -160,11 +159,10 @@
 
     function makeMedium() {
         const type = randInt(1, 3);
-        let m = randInt(1, 4); // x의 계수
-        let n = randInt(1, 7); // 상수항
+        let m = randInt(1, 4); 
+        let n = randInt(1, 7); 
         if (m === 1 && n === 1) n = randInt(2, 7); 
 
-        // 공통인수 추출 처리
         let g = getGCD(m, n);
         let mp = m / g;
         let np = n / g;
@@ -180,7 +178,6 @@
         let q, ans, w1, w2, w3;
         
         if (type === 1) { 
-            // 유형 1: 합차공식 (m²x² - n²)
             q = `${m2Str} - ${n*n}`; 
             if (g === 1) {
                 ans = `(${mStr}+${n})(${mStr}-${n})`; 
@@ -194,7 +191,6 @@
                 w3 = `${pref}(${mpStr}-${np})²`; 
             }
         } else if (type === 2) { 
-            // 유형 2: 완전제곱식 플러스 (m²x² + 2mnx + n²)
             q = `${m2Str} + ${2*m*n}x + ${n*n}`; 
             if (g === 1) {
                 ans = `(${mStr}+${n})²`; 
@@ -208,7 +204,6 @@
                 w3 = `${pref}(${mpStr}-${np})²`; 
             }
         } else { 
-            // 유형 3: 완전제곱식 마이너스 (m²x² - 2mnx + n²)
             q = `${m2Str} - ${2*m*n}x + ${n*n}`; 
             if (g === 1) {
                 ans = `(${mStr}-${n})²`; 
@@ -239,21 +234,20 @@
 
             if (a === 0 || b === 0) continue;
             
-            // x²의 계수가 1이 되는 경우 원천 차단 (무조건 2 이상이 나오도록 강제)
             if (c * d === 1) continue;
             
-            // 괄호 내부에 공통인수가 없도록 설정
             if (getGCD(c, Math.abs(a)) !== 1) continue;
             if (getGCD(d, Math.abs(b)) !== 1) continue;
             
-            // 완전제곱식 제외
             if (c === d && a === b) continue;
 
             let A = c * d;
             let B = c * b + a * d;
             let C = a * b;
+            
+            // x항의 계수가 0이 되면 부호를 바꾼 오답(w1)이 정답과 수학적으로 같아지므로 제외
+            if (B === 0) continue; 
 
-            // 전체 식에 공통인수가 없도록 설정
             if (getGCD(A, getGCD(Math.abs(B), Math.abs(C))) !== 1) continue;
 
             valid = true;
@@ -263,8 +257,6 @@
         let B = c * b + a * d;
         let C = a * b;
 
-        // 식 생성
-        // A는 무조건 1보다 크므로 "x²"만 출력되는 일을 방지합니다.
         let A_str = A + "x²"; 
         let B_str = B === 0 ? "" : (B === 1 ? " + x" : (B === -1 ? " - x" : (B > 0 ? ` + ${B}x` : ` - ${Math.abs(B)}x`)));
         let C_str = C > 0 ? ` + ${C}` : ` - ${Math.abs(C)}`;
@@ -275,29 +267,26 @@
         
         // 정답
         let ans = `(${cx_str}${a>0?'+'+a:a})(${dx_str}${b>0?'+'+b:b})`;
+        
+        // 순서가 뒤바뀐 정답 문자열 정의 (이 문자열이 오답에 들어가는 것을 방지)
+        let ansReversed = `(${dx_str}${b>0?'+'+b:b})(${cx_str}${a>0?'+'+a:a})`;
 
-        // 오답 1: 부호 오류
         let w1 = `(${cx_str}${a>0?-a:'+'+Math.abs(a)})(${dx_str}${b>0?-b:'+'+Math.abs(b)})`;
-        // 오답 2: 숫자 위치 오류
         let w2 = `(${cx_str}${b>0?'+'+b:b})(${dx_str}${a>0?'+'+a:a})`;
-        // 오답 3: 최고차항 계수 분배 오류 (A를 한 쪽에 몰아줌)
         let w3 = `(${A}x${a>0?'+'+a:a})(x${b>0?'+'+b:b})`;
 
-        // 오답 중복 시 안전장치
         let wrongs = [w1, w2, w3];
         for(let i = 0; i < 3; i++) {
-            if(wrongs[i] === ans || wrongs.indexOf(wrongs[i]) !== i) {
+            // 오답이 정답이거나, 순서가 바뀐 정답(ansReversed)과 같거나, 중복되는 경우 계속해서 새로 생성
+            while(wrongs[i] === ans || wrongs[i] === ansReversed || wrongs.indexOf(wrongs[i]) !== i) {
+                let fC = randInt(1, 4), fD = randInt(1, 4);
                 let fA = randInt(1, 5), fB = randInt(1, 5);
                 let fS1 = randInt(0, 1) ? '+' : '-';
                 let fS2 = randInt(0, 1) ? '+' : '-';
-                wrongs[i] = `(${cx_str}${fS1}${fA})(${dx_str}${fS2}${fB})`;
+                let fc_str = fC === 1 ? "x" : fC + "x";
+                let fd_str = fD === 1 ? "x" : fD + "x";
+                wrongs[i] = `(${fc_str}${fS1}${fA})(${fd_str}${fS2}${fB})`;
             }
-        }
-        
-        if (new Set([ans, ...wrongs]).size < 4) {
-             wrongs[0] = `(${cx_str}+7)(${dx_str}-8)`;
-             wrongs[1] = `(${cx_str}-7)(${dx_str}+8)`;
-             wrongs[2] = `(${cx_str}+9)(${dx_str}-1)`;
         }
 
         let { options, answer } = generateOptions(ans, wrongs[0], wrongs[1], wrongs[2]);
@@ -309,8 +298,8 @@
     let totalScore = 0;
     let startTime = 0;
     let timerInterval;
-    let currentLevelName = ""; // 현재 진행 중인 난이도 이름을 저장할 변수
-    let currentLevelColor = ""; // 현재 진행 중인 난이도의 색상을 저장할 변수
+    let currentLevelName = ""; 
+    let currentLevelColor = ""; 
 
     const BASE_SCORE = 100;
     const MAX_TIME_BONUS = 100;
@@ -325,9 +314,8 @@
 
     function startQuiz(level) {
         currentQuestions = [];
-        let usedQuestions = new Set(); // 출제된 문제를 기억할 Set 생성
+        let usedQuestions = new Set(); 
 
-        // 난이도 정보 저장
         if (level === 'easy') {
             currentLevelName = "쉬움";
             currentLevelColor = "#58cc02";
@@ -339,14 +327,12 @@
             currentLevelColor = "#ff4b4b";
         }
 
-        // 10개의 중복되지 않는 문제가 모일 때까지 반복
         while (currentQuestions.length < 10) {
             let qData;
             if (level === 'easy') qData = makeEasy();
             else if (level === 'medium') qData = makeMedium();
             else qData = makeHard();
 
-            // Set에 없는 새로운 문제일 경우에만 추가
             if (!usedQuestions.has(qData.q)) {
                 usedQuestions.add(qData.q);
                 currentQuestions.push(qData);
@@ -435,7 +421,6 @@
         document.getElementById("result-screen").style.display = "block";
         document.getElementById("final-score").innerText = totalScore;
         
-        // 결과 화면에 난이도 배지 출력 적용
         const badge = document.getElementById("result-level-badge");
         badge.innerText = `${currentLevelName} 난이도`;
         badge.style.backgroundColor = currentLevelColor;
